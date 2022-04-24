@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.ilyapasyuk.cyprus_bus_stations">
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
    <application
         android:label="cyprus_bus_stations"
         android:name="${applicationName}"
@@ -34,6 +36,4 @@
                   android:value="AIzaSyAjhniMoDLu3ZvQbnzHjQUiB6zUQ7lrv4w"/>
 
    </application>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 </manifest>
