@@ -87,7 +87,7 @@ class MapState extends State<Map> {
         floatingActionButton: FloatingActionButton.extended(
           onPressed: _getCurrentLocation,
           label: const Text('My location'),
-          icon: const Icon(Icons.directions_bus_filled),
+          icon: const Icon(Icons.location_pin),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat);
   }
