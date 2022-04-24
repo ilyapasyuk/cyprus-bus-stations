@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -17,22 +18,30 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Cyprus bus stations',
-      home: Map(),
+      home: MapScreen(),
     );
   }
 }
 
-class Map extends StatefulWidget {
+class MapScreen extends StatefulWidget {
   @override
-  State<Map> createState() => MapState();
+  State<MapScreen> createState() => MapState();
 }
 
-class MapState extends State<Map> {
+class MapState extends State<MapScreen> {
   final Completer<GoogleMapController> _controller = Completer();
   // For storing the current position
   late Position _currentPosition;
   // For controlling the view of the Map
   late GoogleMapController mapController;
+// Object for PolylinePoints
+  late PolylinePoints polylinePoints;
+
+// List of coordinates to join
+  List<LatLng> polylineCoordinates = [];
+
+// Map storing polylines created by connecting two points
+  Map<PolylineId, Polyline> polylines = {};
 
   @override
   void initState() {
@@ -112,8 +121,52 @@ class MapState extends State<Map> {
     return await Geolocator.getCurrentPosition();
   }
 
+  _createPolylines(
+    double startLatitude,
+    double startLongitude,
+    double destinationLatitude,
+    double destinationLongitude,
+  ) async {
+    // Initializing PolylinePoints
+    polylinePoints = PolylinePoints();
+
+    // Generating the list of coordinates to be used for
+    // drawing the polylines
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      "AIzaSyAjhniMoDLu3ZvQbnzHjQUiB6zUQ7lrv4w", // Google Maps API Key
+      PointLatLng(startLatitude, startLongitude),
+      PointLatLng(destinationLatitude, destinationLongitude),
+      travelMode: TravelMode.transit,
+    );
+
+    // Adding the coordinates to the list
+    if (result.points.isNotEmpty) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      });
+    }
+
+    // Defining an ID
+    PolylineId id = const PolylineId('poly6e4654');
+
+    // Initializing Polyline
+    Polyline polyline = Polyline(
+      polylineId: id,
+      color: Colors.red,
+      points: polylineCoordinates,
+      width: 3,
+    );
+
+    // Adding the polyline to the map
+    polylines[id] = polyline;
+    setState(() {
+      polylines = {id: polyline};
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    print("polylines, ${polylines.length}");
     return Scaffold(
         body: GoogleMap(
           mapType: MapType.normal,
@@ -125,9 +178,12 @@ class MapState extends State<Map> {
           myLocationButtonEnabled: true,
           zoomGesturesEnabled: true,
           zoomControlsEnabled: true,
+          polylines: Set<Polyline>.of(polylines.values),
         ),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: _getCurrentLocation,
+          onPressed: () async {
+            await _createPolylines(34.7028694, 33.0342098, 32.9677708, 32.9550678);
+          },
           label: const Text('My location'),
           icon: const Icon(Icons.location_pin),
         ),
