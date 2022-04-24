@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 void main() {
@@ -28,8 +29,12 @@ class Map extends StatefulWidget {
 
 class MapState extends State<Map> {
   final Completer<GoogleMapController> _controller = Completer();
+  // For storing the current position
+  late Position _currentPosition;
+  // For controlling the view of the Map
+  late GoogleMapController mapController;
 
-  static const CameraPosition _kGooglePlex = CameraPosition(
+  static const CameraPosition _initialLocation = CameraPosition(
     target: LatLng(34.7028694, 33.0342098),
     zoom: 13,
   );
@@ -41,19 +46,47 @@ class MapState extends State<Map> {
     zoom: 19.151926040649414,
   );
 
+  _getCurrentLocation() async {
+    await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high).then((Position position) async {
+      setState(() {
+        // Store the position in the variable
+        _currentPosition = position;
+
+        print('CURRENT POS: $_currentPosition');
+
+        // For moving the camera to current location
+        mapController.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(position.latitude, position.longitude),
+              zoom: 18.0,
+            ),
+          ),
+        );
+      });
+      // await _getAddress();
+    }).catchError((e) {
+      print(e);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         body: GoogleMap(
           mapType: MapType.normal,
-          initialCameraPosition: _kGooglePlex,
+          initialCameraPosition: _initialLocation,
           onMapCreated: (GoogleMapController controller) {
-            _controller.complete(controller);
+            mapController = controller;
           },
+          myLocationEnabled: true,
+          myLocationButtonEnabled: true,
+          zoomGesturesEnabled: true,
+          zoomControlsEnabled: false,
         ),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: _goToTheLake,
-          label: const Text('To the sea!'),
+          onPressed: _getCurrentLocation,
+          label: const Text('My location'),
           icon: const Icon(Icons.directions_bus_filled),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat);
